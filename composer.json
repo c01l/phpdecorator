@@ -1,0 +1,22 @@
+{
+    "name": "coil/php-decorator",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Coil\\PhpDecorator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Coil\\PhpDecorator\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "psr/container": "2.0.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5.10"
+    }
+}
