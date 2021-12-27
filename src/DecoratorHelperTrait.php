@@ -2,10 +2,7 @@
 
 namespace Coil\PhpDecorator;
 
-use Psr\Container\ContainerInterface;
-
 trait DecoratorHelperTrait {
-
     private array $wrappers = [];
 
     /**

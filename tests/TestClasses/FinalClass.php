@@ -6,10 +6,8 @@ use Coil\PhpDecorator\Decorator;
 
 final class FinalClass
 {
-
     #[Decorator("bla")]
     public function testFunc()
     {
     }
-
 }

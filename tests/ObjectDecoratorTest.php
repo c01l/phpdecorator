@@ -3,7 +3,7 @@
 namespace Coil\PhpDecorator\Tests;
 
 use Coil\PhpDecorator\DecoratorException;
-use Coil\PhpDecorator\ObjectDecorator;
+use Coil\PhpDecorator\DecoratorManager;
 use Coil\PhpDecorator\Tests\TestClasses\FinalClass;
 use Coil\PhpDecorator\Tests\TestClasses\Logger;
 use Coil\PhpDecorator\Tests\TestClasses\MultipleDecoratorClass;
@@ -15,14 +15,13 @@ use ReflectionClass;
 
 class ObjectDecoratorTest extends TestCase
 {
-
-    private ObjectDecorator $sut;
+    private DecoratorManager $sut;
     private SimpleContainer $simpleContainer;
 
     protected function setUp(): void
     {
         $this->simpleContainer = new SimpleContainer();
-        $this->sut = new ObjectDecorator($this->simpleContainer);
+        $this->sut = new DecoratorManager($this->simpleContainer);
         $logger = new Logger();
         $this->simpleContainer->set(Logger::class, $logger);
     }
@@ -65,5 +64,4 @@ class ObjectDecoratorTest extends TestCase
         $attrNames = array_map(fn($a) => $a->getName(), $attrs);
         $this->assertEquals([UnrelatedAttribute::class], $attrNames);
     }
-
 }

@@ -10,13 +10,11 @@ use ReflectionException;
 use ReflectionMethod;
 use ReflectionParameter;
 
-class ObjectDecorator
-{
+class DecoratorManager {
 
     public function __construct(private ?ContainerInterface $container = null)
     {
     }
-
 
     /**
      * @template T of object
@@ -38,11 +36,41 @@ class ObjectDecorator
         $methods = $rc->getMethods();
         $overwrite_methods = "";
         foreach($methods as $method) {
-            $overwrite_methods .= $this->handleMethod($method, $wrappers);
+            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) => 'return $this->decoratorHelper([$this->real, "' . $method->name . '"], func_get_args(), "' . $method->name . '");');
         }
 
         $classDef = 'return new class($real) extends \\' . $rc->getName()
             . ' { use ' . $trait . '; public function __construct(private mixed $real) {} ' . $overwrite_methods . '};';
+        $obj = eval($classDef);
+        $obj->setWrappers($wrappers);
+        return $obj;
+    }
+
+    /**
+     * @template T
+     * @param class-string<T> $className
+     * @return T
+     * @throws ReflectionException in case the class does not exist
+     * @throws DecoratorException in case a method could not be decorated
+     */
+    public function instantiate(string $className): mixed
+    {
+        $rc = new ReflectionClass($className);
+        if ($rc->isFinal()) {
+            throw new DecoratorException("Cannot decorate final class: $className");
+        }
+
+        $trait = "\\" . DecoratorHelperTrait::class;
+
+        $wrappers = [];
+        $methods = $rc->getMethods();
+        $overwrite_methods = "";
+        foreach($methods as $method) {
+            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) => 'return $this->decoratorHelper([$this, "parent::' . $method->name . '"], func_get_args(), "' . $method->name . '");');
+        }
+
+        $classDef = 'return new class extends \\' . $rc->getName()
+            . ' { use ' . $trait . '; ' . $overwrite_methods . '};';
         $obj = eval($classDef);
         $obj->setWrappers($wrappers);
         return $obj;
@@ -54,7 +82,7 @@ class ObjectDecorator
      * @return string
      * @throws DecoratorException
      */
-    private function handleMethod(ReflectionMethod $method, array &$wrappers): string
+    private function handleMethod(ReflectionMethod $method, array &$wrappers, callable $functionBodyBuilder): string
     {
         $attrs = $method->getAttributes(Decorator::class, ReflectionAttribute::IS_INSTANCEOF);
 
@@ -76,9 +104,7 @@ class ObjectDecorator
         }, $attrs);
         $wrappers[$method->name] = array_reverse($decorators);
 
-        return $this->buildFunctionHead($method) . '{
-            return $this->decoratorHelper([$this->real, "' . $method->name . '"], func_get_args(), "' . $method->name . '");
-        }';
+        return $this->buildFunctionHead($method) . "{{$functionBodyBuilder($method)}}";
     }
 
     private function buildFunctionHead(ReflectionMethod $method): string

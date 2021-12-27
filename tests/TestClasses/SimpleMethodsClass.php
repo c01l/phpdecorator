@@ -3,7 +3,6 @@
 namespace Coil\PhpDecorator\Tests\TestClasses;
 
 class SimpleMethodsClass {
-
     #[LoggingDecorator]
     public function superTest(int $bla, string $doo, float $fllloooat): int {
         return $bla;
