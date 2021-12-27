@@ -2,7 +2,8 @@
 
 namespace Coil\PhpDecorator;
 
-trait DecoratorHelperTrait {
+trait DecoratorHelperTrait
+{
     private array $wrappers = [];
 
     /**
@@ -13,11 +14,12 @@ trait DecoratorHelperTrait {
         $this->wrappers = $wrappers;
     }
 
-    private function decoratorHelper(callable $wrappedMethod, array $args, string $wrappersKey): mixed {
+    private function decoratorHelper(callable $wrappedMethod, array $args, string $wrappersKey): mixed
+    {
         $wrappers = $this->wrappers[$wrappersKey] ?? [];
         $fn = $wrappedMethod;
         /** @var Decorator $wrap */
-        foreach($wrappers as $wrap) {
+        foreach ($wrappers as $wrap) {
             $fn = $wrap->wrap($fn);
         }
         return call_user_func_array($fn, $args);

@@ -25,7 +25,7 @@ class ClassDecoratorTest extends TestCase
     }
 
 
-    public function test_canDecorateSimpleFunction()
+    public function testCanDecorateSimpleFunction()
     {
         /** @var SimpleMethodsClass $obj */
         $obj = $this->sut->instantiate(SimpleMethodsClass::class);
@@ -36,12 +36,14 @@ class ClassDecoratorTest extends TestCase
         $this->assertCount(6, $this->simpleContainer->get(Logger::class)->getLog());
     }
 
-    public function test_finalClass_cannotBeDecorated() {
+    public function testFinalClassCannotBeDecorated()
+    {
         $this->expectException(DecoratorException::class);
         $this->sut->instantiate(FinalClass::class);
     }
 
-    public function test_multipleDecorators() {
+    public function testMultipleDecorators()
+    {
         /** @var MultipleDecoratorClass $obj */
         $obj = $this->sut->instantiate(MultipleDecoratorClass::class);
         $this->assertEquals(123, $obj->superDefaultsTest(123));

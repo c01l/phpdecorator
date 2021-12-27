@@ -4,7 +4,8 @@ namespace Coil\PhpDecorator\Tests\TestClasses;
 
 use Psr\Container\ContainerInterface;
 
-class SimpleContainer implements ContainerInterface {
+class SimpleContainer implements ContainerInterface
+{
     private array $objs = [];
 
     public function get(string $id)

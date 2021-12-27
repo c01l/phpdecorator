@@ -12,11 +12,13 @@ abstract class Decorator
 
     abstract public function wrap(callable $func): callable;
 
-    public function setContainer(ContainerInterface $container) {
+    public function setContainer(ContainerInterface $container)
+    {
         $this->container = $container;
     }
 
-    public function getContainer(): ContainerInterface {
+    public function getContainer(): ContainerInterface
+    {
         return $this->container;
     }
 }

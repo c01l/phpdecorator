@@ -2,7 +2,8 @@
 
 namespace Coil\PhpDecorator\Tests\TestClasses;
 
-class Logger {
+class Logger
+{
     private array $log = [];
 
     public function log(string $msg): void

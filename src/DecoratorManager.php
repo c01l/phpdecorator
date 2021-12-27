@@ -10,8 +10,8 @@ use ReflectionException;
 use ReflectionMethod;
 use ReflectionParameter;
 
-class DecoratorManager {
-
+class DecoratorManager
+{
     public function __construct(private ?ContainerInterface $container = null)
     {
     }
@@ -35,8 +35,13 @@ class DecoratorManager {
         $wrappers = [];
         $methods = $rc->getMethods();
         $overwrite_methods = "";
-        foreach($methods as $method) {
-            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) => 'return $this->decoratorHelper([$this->real, "' . $method->name . '"], func_get_args(), "' . $method->name . '");');
+        foreach ($methods as $method) {
+            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) =>
+                'return $this->decoratorHelper(
+                    [$this->real, "' . $method->name . '"], 
+                    func_get_args(), 
+                    "' . $method->name . '"
+                 );');
         }
 
         $classDef = 'return new class($real) extends \\' . $rc->getName()
@@ -65,8 +70,13 @@ class DecoratorManager {
         $wrappers = [];
         $methods = $rc->getMethods();
         $overwrite_methods = "";
-        foreach($methods as $method) {
-            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) => 'return $this->decoratorHelper([$this, "parent::' . $method->name . '"], func_get_args(), "' . $method->name . '");');
+        foreach ($methods as $method) {
+            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) =>
+                'return $this->decoratorHelper(
+                    [$this, "parent::' . $method->name . '"], 
+                    func_get_args(), "
+                    ' . $method->name . '
+                 ");');
         }
 
         $classDef = 'return new class extends \\' . $rc->getName()
@@ -132,22 +142,26 @@ class DecoratorManager {
         return "$attrs {$parameter->getType()->getName()} \${$parameter->getName()}$default";
     }
 
-    private function buildAttributeList(array $attrs): string {
+    private function buildAttributeList(array $attrs): string
+    {
         $attrs = array_filter($attrs, fn($a) => !($a->newInstance() instanceof Decorator));
         return implode(", ", array_map([$this, "buildAttributeParam"], $attrs));
     }
 
-    private function buildAttributeParam(ReflectionAttribute $attr): string {
+    private function buildAttributeParam(ReflectionAttribute $attr): string
+    {
         $params = [];
-        foreach($attr->getArguments() as $name => $value) {
+        foreach ($attr->getArguments() as $name => $value) {
             if (is_int($value) || is_float($value)) {
                 $v = $value;
             } elseif (is_bool($value)) {
                 $v = $value ? "true" : "false";
-            } elseif(is_string($value)) {
+            } elseif (is_string($value)) {
                 $v = json_encode($value);
             } else {
-                throw new \InvalidArgumentException("Cannot encode argument parameter: $name (type: " . gettype($value) . ")");
+                throw new \InvalidArgumentException(
+                    "Cannot encode argument parameter: $name (type: " . gettype($value) . ")"
+                );
             }
             $params[] = "$name: " . $v;
         }
