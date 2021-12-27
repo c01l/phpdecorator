@@ -9,7 +9,9 @@ use Coil\PhpDecorator\Tests\TestClasses\Logger;
 use Coil\PhpDecorator\Tests\TestClasses\MultipleDecoratorClass;
 use Coil\PhpDecorator\Tests\TestClasses\SimpleContainer;
 use Coil\PhpDecorator\Tests\TestClasses\SimpleMethodsClass;
+use Coil\PhpDecorator\Tests\TestClasses\UnrelatedAttribute;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 class ObjectDecoratorTest extends TestCase
 {
@@ -51,6 +53,17 @@ class ObjectDecoratorTest extends TestCase
         $this->assertEquals(123, $obj->superDefaultsTest(123));
         $this->assertEquals(123, $obj->superDefaultsTest(456));
         $this->assertCount(4, $this->simpleContainer->get(Logger::class)->getLog());
+    }
+
+    public function test_keepsUnrelatedAttributes() {
+        $mdc = new MultipleDecoratorClass();
+        $obj = $this->sut->decorate($mdc);
+        $this->assertNotNull($obj);
+        $rc = new ReflectionClass($obj);
+        $m = $rc->getMethod("superDefaultsTest");
+        $attrs = $m->getAttributes();
+        $attrNames = array_map(fn($a) => $a->getName(), $attrs);
+        $this->assertEquals([UnrelatedAttribute::class], $attrNames);
     }
 
 }

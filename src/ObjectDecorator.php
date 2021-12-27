@@ -86,8 +86,9 @@ class ObjectDecorator
         $modifiers = implode(" ", Reflection::getModifierNames($method->getModifiers()));
         $paramList = implode(", ", array_map([$this, "buildFunctionParam"], $method->getParameters()));
         $type = $method->getReturnType()->getName();
-        // TODO add remaining attributes
-        return $modifiers . " function " . $method->name . "($paramList): $type";
+
+        $attrs = $this->buildAttributeList($method->getAttributes());
+        return "$attrs $modifiers function " . $method->name . "($paramList): $type";
     }
 
     private function buildFunctionParam(ReflectionParameter $parameter): string
@@ -99,7 +100,31 @@ class ObjectDecorator
                 $value = json_encode($value);
             }
             $default = " = " . $value;
-        };
-        return $parameter->getType()->getName() . ' $' . $parameter->getName() . $default;
+        }
+
+        $attrs = $this->buildAttributeList($parameter->getAttributes());
+        return "$attrs {$parameter->getType()->getName()} \${$parameter->getName()}$default";
+    }
+
+    private function buildAttributeList(array $attrs): string {
+        $attrs = array_filter($attrs, fn($a) => !($a->newInstance() instanceof Decorator));
+        return implode(", ", array_map([$this, "buildAttributeParam"], $attrs));
+    }
+
+    private function buildAttributeParam(ReflectionAttribute $attr): string {
+        $params = [];
+        foreach($attr->getArguments() as $name => $value) {
+            if (is_int($value) || is_float($value)) {
+                $v = $value;
+            } elseif (is_bool($value)) {
+                $v = $value ? "true" : "false";
+            } elseif(is_string($value)) {
+                $v = json_encode($value);
+            } else {
+                throw new \InvalidArgumentException("Cannot encode argument parameter: $name (type: " . gettype($value) . ")");
+            }
+            $params[] = "$name: " . $v;
+        }
+        return "#[{$attr->getName()}(" . implode(", ", $params) . ")]";
     }
 }
