@@ -132,7 +132,7 @@ class DecoratorManager
                 $overwrite_methods .= $this->handleMethod(
                     $method,
                     fn($method) => 'return $this->decoratorHelper(
-                    [$this, "parent::' . $method->name . '"], 
+                    function () { return parent::' . $method->name . '(...func_get_args());},
                     func_get_args(), 
                     "' . $method->name . '"
                 );'
