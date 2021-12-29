@@ -38,7 +38,6 @@ class ClassDecoratorTest extends TestCase
 
     public function testCanDecorateSimpleFunction()
     {
-        /** @var SimpleMethodsClass $obj */
         $obj = $this->sut->instantiate(SimpleMethodsClass::class);
         $this->assertEquals(1, $obj->superTest(1, "sadfg", 2.4));
         $this->assertEquals(2, $obj->superDefaultsTest(2));

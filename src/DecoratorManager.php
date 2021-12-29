@@ -19,6 +19,9 @@ class DecoratorManager
     }
 
     /**
+     * Takes an object and wraps each method with the annotated decorators using a proxy.
+     * The proxy object is returned.
+     *
      * @template T of object
      * @param T $real
      * @return T
@@ -73,13 +76,15 @@ class DecoratorManager
     }
 
     /**
-     * @template T
+     * Instantiates a new object of a given class and wraps all methods with the annotated decorators.
+     *
+     * @template T of object
      * @param class-string<T> $className
      * @return T
-     * @throws ReflectionException in case the class does not exist
      * @throws DecoratorException in case a method could not be decorated
+     * @throws ReflectionException in case the class does not exist
      */
-    public function instantiate(string $className): mixed
+    public function instantiate(string $className): object
     {
         $class = $this->loadFromCache($className);
         if ($class !== false) {
