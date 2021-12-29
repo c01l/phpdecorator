@@ -52,8 +52,10 @@ class DecoratorManager
         $wrappers = [];
         $methods = $rc->getMethods();
         $overwrite_methods = "";
+        $count = 0;
         foreach ($methods as $method) {
             $wrappers[$method->name] = $this->buildDecoratorContainer($method);
+            $count += count($wrappers[$method->name]);
             $overwrite_methods .= $this->handleMethod(
                 $method,
                 fn($method) => 'return $this->decoratorHelper(
@@ -62,6 +64,11 @@ class DecoratorManager
                     "' . $method->name . '"
                  );'
             );
+        }
+
+        if ($count === 0) {
+            // No need for decoration. Just return the real class...
+            return $real;
         }
 
         $classBody = ' { use ' . $trait . '; public function __construct(private mixed $real) {} '
@@ -108,8 +115,10 @@ class DecoratorManager
         $wrappers = [];
         $methods = $rc->getMethods();
         $overwrite_methods = "";
+        $count = 0;
         foreach ($methods as $method) {
             $wrappers[$method->name] = $this->buildDecoratorContainer($method);
+            $count += count($wrappers[$method->name]);
             $overwrite_methods .= $this->handleMethod(
                 $method,
                 fn($method) => 'return $this->decoratorHelper(
@@ -118,6 +127,11 @@ class DecoratorManager
                     "' . $method->name . '"
                 );'
             );
+        }
+
+        if ($count === 0) {
+            // No need for decoration. Just return the real class...
+            return new $className();
         }
 
         $classBody = '{ use ' . $trait . '; ' . $overwrite_methods . '};';
