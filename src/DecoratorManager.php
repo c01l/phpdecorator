@@ -56,13 +56,20 @@ class DecoratorManager
         foreach ($methods as $method) {
             $wrappers[$method->name] = $this->buildDecoratorContainer($method);
             $count += count($wrappers[$method->name]);
-            $overwrite_methods .= $this->handleMethod(
-                $method,
-                fn($method) => 'return $this->decoratorHelper(
+
+            if ($wrappers[$method->name] !== []) {
+                $bodyFn = fn($method) => 'return $this->decoratorHelper(
                     [$this->real, "' . $method->name . '"], 
                     func_get_args(), 
                     "' . $method->name . '"
-                 );'
+                 );';
+            } else {
+                $bodyFn = fn($method) => 'return parent::' . $method->name . '(...func_get_args());';
+            }
+
+            $overwrite_methods .= $this->handleMethod(
+                $method,
+                $bodyFn
             );
         }
 
@@ -118,15 +125,19 @@ class DecoratorManager
         $count = 0;
         foreach ($methods as $method) {
             $wrappers[$method->name] = $this->buildDecoratorContainer($method);
-            $count += count($wrappers[$method->name]);
-            $overwrite_methods .= $this->handleMethod(
-                $method,
-                fn($method) => 'return $this->decoratorHelper(
+
+            // methods without decoration can just be forwarded to the base class by not declaring any.
+            if ($wrappers[$method->name] !== []) {
+                $count += count($wrappers[$method->name]);
+                $overwrite_methods .= $this->handleMethod(
+                    $method,
+                    fn($method) => 'return $this->decoratorHelper(
                     [$this, "parent::' . $method->name . '"], 
                     func_get_args(), 
                     "' . $method->name . '"
                 );'
-            );
+                );
+            }
         }
 
         if ($count === 0) {
@@ -185,10 +196,6 @@ class DecoratorManager
     private function handleMethod(ReflectionMethod $method, callable $functionBodyBuilder): string
     {
         $attrs = $method->getAttributes(Decorator::class, ReflectionAttribute::IS_INSTANCEOF);
-
-        if ($attrs === []) {
-            return "";
-        }
 
         if ($method->isPrivate()) {
             throw new DecoratorException("Cannot decorate private function '$method->name'");

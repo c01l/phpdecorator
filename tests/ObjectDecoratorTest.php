@@ -63,6 +63,7 @@ class ObjectDecoratorTest extends TestCase
         $obj = $this->sut->decorate($mdc);
         $this->assertEquals(123, $obj->superDefaultsTest(123));
         $this->assertEquals(123, $obj->superDefaultsTest(456));
+        $this->assertEquals("hi", $obj->undecoratedFunc());
         $this->assertCount(4, $this->simpleContainer->get(Logger::class)->getLog());
     }
 
