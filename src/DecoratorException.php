@@ -1,6 +1,6 @@
 <?php
 
-namespace Coil\PhpDecorator;
+namespace C01l\PhpDecorator;
 
 use Exception;
 use Throwable;

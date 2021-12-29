@@ -1,8 +1,8 @@
 <?php
 
-namespace Coil\PhpDecorator\Tests\TestClasses;
+namespace C01l\PhpDecorator\Tests\TestClasses;
 
-use Coil\PhpDecorator\Decorator;
+use C01l\PhpDecorator\Decorator;
 
 final class FinalClass
 {

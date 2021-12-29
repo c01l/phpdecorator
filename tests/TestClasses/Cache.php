@@ -1,9 +1,9 @@
 <?php
 
-namespace Coil\PhpDecorator\Tests\TestClasses;
+namespace C01l\PhpDecorator\Tests\TestClasses;
 
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class Cache extends \Coil\PhpDecorator\Decorator
+class Cache extends \C01l\PhpDecorator\Decorator
 {
     private mixed $result;
     private bool $stored = false;

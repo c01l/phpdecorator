@@ -1,6 +1,6 @@
 <?php
 
-namespace Coil\PhpDecorator;
+namespace C01l\PhpDecorator;
 
 use Psr\Container\ContainerInterface;
 use Reflection;

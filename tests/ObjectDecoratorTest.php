@@ -1,15 +1,15 @@
 <?php
 
-namespace Coil\PhpDecorator\Tests;
+namespace C01l\PhpDecorator\Tests;
 
-use Coil\PhpDecorator\DecoratorException;
-use Coil\PhpDecorator\DecoratorManager;
-use Coil\PhpDecorator\Tests\TestClasses\FinalClass;
-use Coil\PhpDecorator\Tests\TestClasses\Logger;
-use Coil\PhpDecorator\Tests\TestClasses\MultipleDecoratorClass;
-use Coil\PhpDecorator\Tests\TestClasses\SimpleContainer;
-use Coil\PhpDecorator\Tests\TestClasses\SimpleMethodsClass;
-use Coil\PhpDecorator\Tests\TestClasses\UnrelatedAttribute;
+use C01l\PhpDecorator\DecoratorException;
+use C01l\PhpDecorator\DecoratorManager;
+use C01l\PhpDecorator\Tests\TestClasses\FinalClass;
+use C01l\PhpDecorator\Tests\TestClasses\Logger;
+use C01l\PhpDecorator\Tests\TestClasses\MultipleDecoratorClass;
+use C01l\PhpDecorator\Tests\TestClasses\SimpleContainer;
+use C01l\PhpDecorator\Tests\TestClasses\SimpleMethodsClass;
+use C01l\PhpDecorator\Tests\TestClasses\UnrelatedAttribute;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 

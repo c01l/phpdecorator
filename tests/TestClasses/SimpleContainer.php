@@ -1,6 +1,6 @@
 <?php
 
-namespace Coil\PhpDecorator\Tests\TestClasses;
+namespace C01l\PhpDecorator\Tests\TestClasses;
 
 use Psr\Container\ContainerInterface;
 

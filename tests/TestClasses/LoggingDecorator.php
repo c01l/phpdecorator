@@ -1,9 +1,9 @@
 <?php
 
-namespace Coil\PhpDecorator\Tests\TestClasses;
+namespace C01l\PhpDecorator\Tests\TestClasses;
 
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class LoggingDecorator extends \Coil\PhpDecorator\Decorator
+class LoggingDecorator extends \C01l\PhpDecorator\Decorator
 {
     public function wrap(callable $func): callable
     {
