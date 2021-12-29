@@ -13,8 +13,8 @@ class CallAfter extends Decorator
 
     public function wrap(callable $func): callable
     {
-        return function () use ($func) {
-            $v = $func(...func_get_args());
+        return function (...$args) use ($func) {
+            $v = $func(...$args);
             ($this->func)();
             return $v;
         };

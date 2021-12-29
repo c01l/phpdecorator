@@ -22,6 +22,6 @@ trait DecoratorHelperTrait
         foreach ($wrappers as $wrap) {
             $fn = $wrap->wrap($fn);
         }
-        return call_user_func_array($fn, $args);
+        return $fn(...$args);
     }
 }

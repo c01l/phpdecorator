@@ -13,9 +13,9 @@ class CallBefore extends Decorator
 
     public function wrap(callable $func): callable
     {
-        return function () use ($func) {
+        return function (...$args) use ($func) {
             ($this->func)();
-            return $func(...func_get_args());
+            return $func(...$args);
         };
     }
 }

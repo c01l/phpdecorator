@@ -10,13 +10,13 @@ class Cache extends \C01l\PhpDecorator\Decorator
 
     public function wrap(callable $func): callable
     {
-        return function () use ($func) {
+        return function (...$args) use ($func) {
 
             if ($this->stored) {
                 return $this->result;
             }
 
-            $this->result = call_user_func_array($func, func_get_args());
+            $this->result = $func(...$args);
             $this->stored = true;
 
             return $this->result;

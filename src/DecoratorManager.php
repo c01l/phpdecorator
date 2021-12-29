@@ -60,11 +60,11 @@ class DecoratorManager
             if ($wrappers[$method->name] !== []) {
                 $bodyFn = fn($method) => 'return $this->decoratorHelper(
                     [$this->real, "' . $method->name . '"], 
-                    func_get_args(), 
+                    get_defined_vars(), 
                     "' . $method->name . '"
                  );';
             } else {
-                $bodyFn = fn($method) => 'return parent::' . $method->name . '(...func_get_args());';
+                $bodyFn = fn($method) => 'return parent::' . $method->name . '(...get_defined_vars());';
             }
 
             $overwrite_methods .= $this->handleMethod(
@@ -132,8 +132,8 @@ class DecoratorManager
                 $overwrite_methods .= $this->handleMethod(
                     $method,
                     fn($method) => 'return $this->decoratorHelper(
-                    function () { return parent::' . $method->name . '(...func_get_args());},
-                    func_get_args(), 
+                    function (...$args) { return parent::' . $method->name . '(...$args);},
+                    get_defined_vars(), 
                     "' . $method->name . '"
                 );'
                 );
