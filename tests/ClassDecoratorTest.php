@@ -15,13 +15,24 @@ class ClassDecoratorTest extends TestCase
 {
     private DecoratorManager $sut;
     private SimpleContainer $simpleContainer;
+    private string $testClassCache;
 
     protected function setUp(): void
     {
+        $this->testClassCache = sys_get_temp_dir() . "/decoratorTestCache/";
+        @mkdir($this->testClassCache, recursive: true);
+        array_map('unlink', array_filter((array)glob($this->testClassCache . "*") ?: []));
+
         $this->simpleContainer = new SimpleContainer();
-        $this->sut = new DecoratorManager($this->simpleContainer);
+        $this->sut = new DecoratorManager($this->testClassCache, $this->simpleContainer);
+
         $logger = new Logger();
         $this->simpleContainer->set(Logger::class, $logger);
+    }
+
+    protected function tearDown(): void
+    {
+        @rmdir($this->testClassCache);
     }
 
 

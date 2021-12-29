@@ -12,8 +12,10 @@ use ReflectionParameter;
 
 class DecoratorManager
 {
-    public function __construct(private ?ContainerInterface $container = null)
-    {
+    public function __construct(
+        private false|string $classCachePath = false,
+        private ?ContainerInterface $container = null
+    ) {
     }
 
     /**
@@ -25,6 +27,18 @@ class DecoratorManager
      */
     public function decorate(object $real): object
     {
+        $class = $this->loadFromCache($real::class);
+        if ($class !== false) {
+            $ret = new $class($real);
+            $wrappers = [];
+            $rc = new ReflectionClass($real::class);
+            foreach ($rc->getMethods() as $m) {
+                $wrappers[$m->name] = $this->buildDecoratorContainer($m);
+            }
+            $ret->setWrappers($wrappers);
+            return $ret;
+        }
+
         $rc = new ReflectionClass($real::class);
         if ($rc->isFinal()) {
             throw new DecoratorException("Cannot decorate final class: " . $real::class);
@@ -36,16 +50,23 @@ class DecoratorManager
         $methods = $rc->getMethods();
         $overwrite_methods = "";
         foreach ($methods as $method) {
-            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) =>
-                'return $this->decoratorHelper(
+            $wrappers[$method->name] = $this->buildDecoratorContainer($method);
+            $overwrite_methods .= $this->handleMethod(
+                $method,
+                fn($method) => 'return $this->decoratorHelper(
                     [$this->real, "' . $method->name . '"], 
                     func_get_args(), 
                     "' . $method->name . '"
-                 );');
+                 );'
+            );
         }
 
-        $classDef = 'return new class($real) extends \\' . $rc->getName()
-            . ' { use ' . $trait . '; public function __construct(private mixed $real) {} ' . $overwrite_methods . '};';
+        $classBody = ' { use ' . $trait . '; public function __construct(private mixed $real) {} '
+            . $overwrite_methods . '};';
+
+        $this->storeInCache($real::class, $classBody);
+
+        $classDef = 'return new class($real) extends \\' . $rc->getName() . $classBody;
         $obj = eval($classDef);
         $obj->setWrappers($wrappers);
         return $obj;
@@ -60,6 +81,18 @@ class DecoratorManager
      */
     public function instantiate(string $className): mixed
     {
+        $class = $this->loadFromCache($className);
+        if ($class !== false) {
+            $ret = new $class();
+            $wrappers = [];
+            $rc = new ReflectionClass($className);
+            foreach ($rc->getMethods() as $m) {
+                $wrappers[$m->name] = $this->buildDecoratorContainer($m);
+            }
+            $ret->setWrappers($wrappers);
+            return $ret;
+        }
+
         $rc = new ReflectionClass($className);
         if ($rc->isFinal()) {
             throw new DecoratorException("Cannot decorate final class: $className");
@@ -71,28 +104,66 @@ class DecoratorManager
         $methods = $rc->getMethods();
         $overwrite_methods = "";
         foreach ($methods as $method) {
-            $overwrite_methods .= $this->handleMethod($method, $wrappers, fn($method) =>
-                'return $this->decoratorHelper(
+            $wrappers[$method->name] = $this->buildDecoratorContainer($method);
+            $overwrite_methods .= $this->handleMethod(
+                $method,
+                fn($method) => 'return $this->decoratorHelper(
                     [$this, "parent::' . $method->name . '"], 
-                    func_get_args(), "
-                    ' . $method->name . '
-                 ");');
+                    func_get_args(), 
+                    "' . $method->name . '"
+                );'
+            );
         }
 
-        $classDef = 'return new class extends \\' . $rc->getName()
-            . ' { use ' . $trait . '; ' . $overwrite_methods . '};';
+        $classBody = '{ use ' . $trait . '; ' . $overwrite_methods . '};';
+        $this->storeInCache($className, $classBody);
+
+        $classDef = "return new class extends \\{$rc->getName()} $classBody";
         $obj = eval($classDef);
         $obj->setWrappers($wrappers);
         return $obj;
     }
 
+    private function classToFilename(string $class): string
+    {
+        return str_replace("\\", "_", $class);
+    }
+
+    private function loadFromCache(string $class): string|false
+    {
+        $newName = $this->classToFilename($class);
+        if (class_exists($newName)) {
+            return $newName;
+        }
+        $filename = $this->classCachePath . "/$newName.php";
+        if (!file_exists($filename)) {
+            return false;
+        }
+        require_once $filename;
+        return $newName;
+    }
+
+    private function storeInCache(string $className, string $classBody): void
+    {
+        if ($this->classCachePath === false) {
+            return;
+        }
+
+        $newName = $this->classToFilename($className);
+
+        file_put_contents(
+            $this->classCachePath . "/$newName.php",
+            "<?php class $newName extends $className $classBody"
+        );
+    }
+
     /**
      * @param ReflectionMethod $method
-     * @param array $wrappers
+     * @param callable $functionBodyBuilder
      * @return string
      * @throws DecoratorException
      */
-    private function handleMethod(ReflectionMethod $method, array &$wrappers, callable $functionBodyBuilder): string
+    private function handleMethod(ReflectionMethod $method, callable $functionBodyBuilder): string
     {
         $attrs = $method->getAttributes(Decorator::class, ReflectionAttribute::IS_INSTANCEOF);
 
@@ -104,17 +175,21 @@ class DecoratorManager
             throw new DecoratorException("Cannot decorate private function '$method->name'");
         }
 
-        $decorators = array_map(function (ReflectionAttribute $x) {
-            /** @var Decorator $decoratorInstance */
-            $decoratorInstance = $x->newInstance();
-            if ($this->container !== null && method_exists($decoratorInstance, "setContainer")) {
-                $decoratorInstance->setContainer($this->container);
-            }
-            return $decoratorInstance;
-        }, $attrs);
-        $wrappers[$method->name] = array_reverse($decorators);
-
         return $this->buildFunctionHead($method) . "{{$functionBodyBuilder($method)}}";
+    }
+
+    private function buildDecoratorContainer(ReflectionMethod $method): array
+    {
+        return array_reverse(
+            array_map(function (ReflectionAttribute $x) {
+                /** @var Decorator $decoratorInstance */
+                $decoratorInstance = $x->newInstance();
+                if ($this->container !== null && method_exists($decoratorInstance, "setContainer")) {
+                    $decoratorInstance->setContainer($this->container);
+                }
+                return $decoratorInstance;
+            }, $method->getAttributes(Decorator::class, ReflectionAttribute::IS_INSTANCEOF))
+        );
     }
 
     private function buildFunctionHead(ReflectionMethod $method): string
