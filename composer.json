@@ -1,6 +1,7 @@
 {
     "name": "c01l/phpdecorator",
     "version": "1.0.0",
+    "description": "The phpdecorator library can be used to wrap functions of objects and classes with additional functionality. This is a feature that can be compared to Python decorators. ",
     "type": "library",
     "license": "MIT",
     "autoload": {
