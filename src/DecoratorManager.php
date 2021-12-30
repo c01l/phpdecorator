@@ -47,8 +47,6 @@ class DecoratorManager
             throw new DecoratorException("Cannot decorate final class: " . $real::class);
         }
 
-        $trait = "\\" . DecoratorHelperTrait::class;
-
         $wrappers = [];
         $methods = $rc->getMethods();
         $overwrite_methods = "";
@@ -64,7 +62,7 @@ class DecoratorManager
                     "' . $method->name . '"
                  );';
             } else {
-                $bodyFn = fn($method) => 'return parent::' . $method->name . '(...get_defined_vars());';
+                $bodyFn = fn($method) => 'return $this->real->' . $method->name . '(...get_defined_vars());';
             }
 
             $overwrite_methods .= $this->handleMethod(
@@ -78,12 +76,20 @@ class DecoratorManager
             return $real;
         }
 
-        $classBody = ' { use ' . $trait . '; public function __construct(private mixed $real) {} '
+
+        $trait = "\\" . DecoratorHelperTrait::class;
+        $trait2 = "\\" . ProxyVariableAccessTrait::class;
+        $classBody = ' { use ' . $trait . '; use ' . $trait2 . '; public function __construct(private mixed $real) {} '
             . $overwrite_methods . '};';
 
         $this->storeInCache($real::class, $classBody);
 
-        $classDef = 'return new class($real) extends \\' . $rc->getName() . $classBody;
+        $extends = "";
+        if (!$rc->isAnonymous()) {
+            $extends = "extends \\{$rc->getName()} ";
+        }
+
+        $classDef = 'return new class($real) ' . $extends . $classBody;
         $obj = eval($classDef);
         $obj->setWrappers($wrappers);
         return $obj;
@@ -148,7 +154,12 @@ class DecoratorManager
         $classBody = '{ use ' . $trait . '; ' . $overwrite_methods . '};';
         $this->storeInCache($className, $classBody);
 
-        $classDef = "return new class extends \\{$rc->getName()} $classBody";
+        $extends = "";
+        if (!$rc->isAnonymous()) {
+            $extends = "extends \\{$rc->getName()}";
+        }
+
+        $classDef = "return new class $extends $classBody";
         $obj = eval($classDef);
         $obj->setWrappers($wrappers);
         return $obj;
@@ -156,7 +167,7 @@ class DecoratorManager
 
     private function classToFilename(string $class): string
     {
-        return str_replace("\\", "_", $class);
+        return preg_replace("/[^[:alnum:]]/", "_", $class);
     }
 
     private function loadFromCache(string $class): string|false
@@ -222,10 +233,11 @@ class DecoratorManager
     {
         $modifiers = implode(" ", Reflection::getModifierNames($method->getModifiers()));
         $paramList = implode(", ", array_map([$this, "buildFunctionParam"], $method->getParameters()));
-        $type = $method->getReturnType()->getName();
+        $type = $method->getReturnType()?->getName();
+        $type = $type ? ": $type" : "";
 
         $attrs = $this->buildAttributeList($method->getAttributes());
-        return "$attrs $modifiers function " . $method->name . "($paramList): $type";
+        return "$attrs $modifiers function " . $method->name . "($paramList) $type";
     }
 
     private function buildFunctionParam(ReflectionParameter $parameter): string
@@ -240,7 +252,7 @@ class DecoratorManager
         }
 
         $attrs = $this->buildAttributeList($parameter->getAttributes());
-        return "$attrs {$parameter->getType()->getName()} \${$parameter->getName()}$default";
+        return "$attrs {$parameter->getType()?->getName()} \${$parameter->getName()}$default";
     }
 
     private function buildAttributeList(array $attrs): string

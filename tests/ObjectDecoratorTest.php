@@ -6,6 +6,7 @@ use C01l\PhpDecorator\DecoratorException;
 use C01l\PhpDecorator\DecoratorManager;
 use C01l\PhpDecorator\Tests\TestClasses\FinalClass;
 use C01l\PhpDecorator\Tests\TestClasses\Logger;
+use C01l\PhpDecorator\Tests\TestClasses\LoggingDecorator;
 use C01l\PhpDecorator\Tests\TestClasses\MultipleDecoratorClass;
 use C01l\PhpDecorator\Tests\TestClasses\SimpleContainer;
 use C01l\PhpDecorator\Tests\TestClasses\SimpleMethodsClass;
@@ -77,5 +78,39 @@ class ObjectDecoratorTest extends TestCase
         $attrs = $m->getAttributes();
         $attrNames = array_map(fn($a) => $a->getName(), $attrs);
         $this->assertEquals([UnrelatedAttribute::class], $attrNames);
+    }
+
+    public function testDecorateAnonymousClass()
+    {
+        $obj = new class {
+            #[LoggingDecorator]
+            public function test($x)
+            {
+                return $x;
+            }
+        };
+        $obj = $this->sut->decorate($obj);
+        $this->assertEquals(2, $obj->test(2));
+    }
+
+    public function testAccessingPublicVariables()
+    {
+        $obj = new class {
+            public int $i = 0;
+
+            public function get(): int
+            {
+                return $this->i;
+            }
+
+            #[LoggingDecorator]
+            public function test()
+            {
+            }
+        };
+        $obj = $this->sut->decorate($obj);
+        $obj->i = 3;
+        $this->assertEquals(3, $obj->get());
+        $this->assertEquals(3, $obj->i);
     }
 }
